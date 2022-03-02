@@ -12,10 +12,21 @@
         <project>*</project>
         <step>*</step>
         
-        <!-- sample parameter -->
-        <value>test</value>
-        <!-- display button to finish the task directly from within the entered plugin -->
-        <allowTaskFinishButtons>true</allowTaskFinishButtons>
+        <!-- which vocabulary to use -->
+        <vocabulary>Privilegien-Klassen</vocabulary>
+
+        <!-- which field to use for the class name -->
+        <class>Klasse</class>
+
+        <!-- which field to search through for the terms -->
+        <terms>Schlagworte</terms>
+        
+        <!-- which metadata field to read to find out the right classes -->
+        <metadataTitle>TitleDocMain</metadataTitle>
+        
+        <!-- which medadata field to create for each found class -->
+        <metadataClass>oepmaClass</metadataClass>
+        
     </config>
 
 </config_plugin>
