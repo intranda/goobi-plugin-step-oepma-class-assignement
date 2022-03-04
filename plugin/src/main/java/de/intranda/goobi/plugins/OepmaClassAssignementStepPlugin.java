@@ -184,12 +184,10 @@ public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
     			}
             	
             	// check if class matches
-            	String [] words = contentTitle.split(" ");
-            	for (String word : words) {
-					if (myTerms.contains(word)) {
-						classesToAssign.add(myClass);
-					}
-				}
+            	PatternMatcher pm = new PatternMatcher();
+            	if (pm.match(myTerms, contentTitle)) {
+            		classesToAssign.add(myClass);
+            	}
             }
             
             
