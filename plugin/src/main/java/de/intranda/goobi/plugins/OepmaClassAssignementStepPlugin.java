@@ -24,7 +24,6 @@ import java.util.ArrayList;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -40,7 +39,6 @@ import org.goobi.vocabulary.VocabRecord;
 import org.goobi.vocabulary.Vocabulary;
 
 import de.sub.goobi.config.ConfigPlugins;
-import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.helper.exceptions.SwapException;
 import de.sub.goobi.persistence.managers.VocabularyManager;
 import lombok.Getter;
@@ -58,7 +56,7 @@ import ugh.exceptions.WriteException;
 @PluginImplementation
 @Log4j2
 public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
-    
+
     @Getter
     private String title = "intranda_step_oepma_class_assignement";
     @Getter
@@ -74,15 +72,15 @@ public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
     public void initialize(Step step, String returnPath) {
         this.returnPath = returnPath;
         this.step = step;
-                
+
         // read parameters from correct block in configuration file
         SubnodeConfiguration myconfig = ConfigPlugins.getProjectAndStepConfig(title, step);
-        vocabulary = myconfig.getString("vocabulary"); 
-        classField = myconfig.getString("class"); 
-        termsField = myconfig.getString("terms"); 
-        metadataTitle = myconfig.getString("metadataTitle"); 
-        metadataClass = myconfig.getString("metadataClass"); 
-        
+        vocabulary = myconfig.getString("vocabulary");
+        classField = myconfig.getString("class");
+        termsField = myconfig.getString("terms");
+        metadataTitle = myconfig.getString("metadataTitle");
+        metadataClass = myconfig.getString("metadataClass");
+
         log.info("OepmaClassAssignement step plugin initialized");
     }
 
@@ -110,7 +108,7 @@ public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
     public String finish() {
         return "/uii" + returnPath;
     }
-    
+
     @Override
     public int getInterfaceVersion() {
         return 0;
@@ -120,7 +118,7 @@ public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
     public HashMap<String, StepReturnValue> validate() {
         return null;
     }
-    
+
     @Override
     public boolean execute() {
         PluginReturnValue ret = run();
@@ -130,7 +128,7 @@ public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
     @Override
     public PluginReturnValue run() {
         boolean successful = true;
-        
+
         try {
             // read mets file
             Fileformat ff = step.getProzess().readMetadataFile();
@@ -141,69 +139,69 @@ public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
                 anchor = logical;
                 logical = logical.getAllChildren().get(0);
             }
-            
+
             // delete existing metadata of defined type
             List<Metadata> originalMetadata = new ArrayList<>();
             for (Metadata md : logical.getAllMetadata()) {
                 if (md.getType().getName().equals(metadataClass)) {
                     originalMetadata.add(md);
-                } 
+                }
             }
             for (Metadata metadata : originalMetadata) {
-				logical.removeMetadata(metadata);
-			}
-            
+                logical.removeMetadata(metadata);
+            }
+
             // find out all classes that shall be assigned
             String contentTitle = "";
             for (Metadata md : logical.getAllMetadata()) {
                 if (md.getType().getName().equals(metadataTitle)) {
-                	contentTitle = md.getValue();
-                } 
+                    contentTitle = md.getValue();
+                }
             }
 
-            Set <String> classesToAssign = new HashSet<String>();
-            
+            Set <String> classesToAssign = new HashSet<>();
+
             // load the vocabulary and all records
             Vocabulary vocab = VocabularyManager.getVocabularyByTitle(vocabulary);
             VocabularyManager.getAllRecords(vocab);
-            
+
             // run through all records
             for (VocabRecord myRecord : vocab.getRecords()) {
-            	List<Field> fields = myRecord.getFields();
-            	String myClass = null;
-            	String myTerms = null;
-            	
-            	// read class name and terms
-            	for (Field field : fields) {
-            		if (field.getLabel().equals(classField)) {
-            			myClass = field.getValue();
-            		}
-            		if (field.getLabel().equals(termsField)) {
-            			myTerms = field.getValue();
-            		}
-    			}
-            	
-            	// check if class matches
-            	PatternMatcher pm = new PatternMatcher();
-            	if (pm.match(myTerms, contentTitle)) {
-            		classesToAssign.add(myClass);
-            	}
+                List<Field> fields = myRecord.getFields();
+                String myClass = null;
+                String myTerms = null;
+
+                // read class name and terms
+                for (Field field : fields) {
+                    if (field.getLabel().equals(classField)) {
+                        myClass = field.getValue();
+                    }
+                    if (field.getLabel().equals(termsField)) {
+                        myTerms = field.getValue();
+                    }
+                }
+
+                // check if class matches
+                PatternMatcher pm = new PatternMatcher();
+                if (pm.match(myTerms, contentTitle)) {
+                    classesToAssign.add(myClass);
+                }
             }
-            
-            
+
+
             //finally add all matching classes as new metadata
             for (String s : classesToAssign) {
-            	Metadata md = new Metadata(prefs.getMetadataTypeByName(metadataClass));
-            	md.setValue(s);
-            	logical.addMetadata(md);            	
-			}
-            
+                Metadata md = new Metadata(prefs.getMetadataTypeByName(metadataClass));
+                md.setValue(s);
+                logical.addMetadata(md);
+            }
+
             // save the mets file
             step.getProzess().writeMetadataFile(ff);
-        } catch (ReadException | PreferencesException | WriteException | IOException | InterruptedException | SwapException | DAOException | MetadataTypeNotAllowedException e) {
+        } catch (ReadException | PreferencesException | WriteException | IOException | SwapException | MetadataTypeNotAllowedException e) {
             log.error(e);
         }
-        
+
         if (!successful) {
             return PluginReturnValue.ERROR;
         }
