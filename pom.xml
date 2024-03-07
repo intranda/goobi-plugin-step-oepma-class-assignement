@@ -7,7 +7,7 @@
     <relativePath />
   </parent>
   <groupId>io.goobi.workflow.plugin</groupId>
-  <artifactId>plugin-step-oepma_class_assignement</artifactId>
+  <artifactId>plugin-step-oepma-class-assignement</artifactId>
   <packaging>pom</packaging>
   <modules>
     <module>module-base</module>
