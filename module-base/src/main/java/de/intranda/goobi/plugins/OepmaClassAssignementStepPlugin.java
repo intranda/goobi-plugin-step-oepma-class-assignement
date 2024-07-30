@@ -172,8 +172,8 @@ public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
                     .request()
                     .getContent()) {
                 List<ExtendedFieldInstance> fields = myRecord.getExtendedFields();
-                String myClass = myRecord.getFieldValueForDefinitionName(classField);
-                String myTerms = myRecord.getFieldValueForDefinitionName(termsField);
+                String myClass = myRecord.getFieldValueForDefinitionName(classField).orElseThrow();
+                String myTerms = myRecord.getFieldValueForDefinitionName(termsField).orElseThrow();
 
                 // check if class matches
                 PatternMatcher pm = new PatternMatcher();
