@@ -27,6 +27,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import io.goobi.vocabulary.exchange.FieldInstance;
+import io.goobi.vocabulary.exchange.Vocabulary;
+import io.goobi.workflow.api.vocabulary.VocabularyAPIManager;
+import io.goobi.workflow.api.vocabulary.helper.ExtendedFieldInstance;
+import io.goobi.workflow.api.vocabulary.helper.ExtendedVocabularyRecord;
 import org.apache.commons.configuration.SubnodeConfiguration;
 import org.goobi.beans.Step;
 import org.goobi.production.enums.PluginGuiType;
@@ -34,13 +39,9 @@ import org.goobi.production.enums.PluginReturnValue;
 import org.goobi.production.enums.PluginType;
 import org.goobi.production.enums.StepReturnValue;
 import org.goobi.production.plugin.interfaces.IStepPluginVersion2;
-import org.goobi.vocabulary.Field;
-import org.goobi.vocabulary.VocabRecord;
-import org.goobi.vocabulary.Vocabulary;
 
 import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.helper.exceptions.SwapException;
-import de.sub.goobi.persistence.managers.VocabularyManager;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
@@ -162,24 +163,17 @@ public class OepmaClassAssignementStepPlugin implements IStepPluginVersion2 {
             Set <String> classesToAssign = new HashSet<>();
 
             // load the vocabulary and all records
-            Vocabulary vocab = VocabularyManager.getVocabularyByTitle(vocabulary);
-            VocabularyManager.getAllRecords(vocab);
+            Vocabulary vocab = VocabularyAPIManager.getInstance().vocabularies().findByName(vocabulary);
 
             // run through all records
-            for (VocabRecord myRecord : vocab.getRecords()) {
-                List<Field> fields = myRecord.getFields();
-                String myClass = null;
-                String myTerms = null;
-
-                // read class name and terms
-                for (Field field : fields) {
-                    if (field.getLabel().equals(classField)) {
-                        myClass = field.getValue();
-                    }
-                    if (field.getLabel().equals(termsField)) {
-                        myTerms = field.getValue();
-                    }
-                }
+            for (ExtendedVocabularyRecord myRecord : VocabularyAPIManager.getInstance().vocabularyRecords()
+                    .list(vocab.getId())
+                    .all()
+                    .request()
+                    .getContent()) {
+                List<ExtendedFieldInstance> fields = myRecord.getExtendedFields();
+                String myClass = myRecord.getFieldValueForDefinitionName(classField);
+                String myTerms = myRecord.getFieldValueForDefinitionName(termsField);
 
                 // check if class matches
                 PatternMatcher pm = new PatternMatcher();
